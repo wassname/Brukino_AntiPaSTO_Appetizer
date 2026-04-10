@@ -39,7 +39,7 @@ NUM_EXAMPLES = 3
 
 
 # %%
-def get_s_space_projector(model, top_k=256):
+def get_s_space_projector(model, top_k=1024):
     """
     Gathers all weight matrices that write to the residual stream
     (o_proj from attention and down_proj from MLP) across all layers,
