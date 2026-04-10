@@ -1,4 +1,4 @@
-# Brukino Kappa S-Space Probe
+# Brukino's AntiPaSTO Appetizer
 
 Testing whether the Frenet-Serret extrinsic curvature ($\kappa$) of a model's hidden state trajectory can predict structural shifts in the model's persona or criterion (e.g., eval-awareness, preference changes) without needing behavioral labels.
 

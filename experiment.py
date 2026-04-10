@@ -9,7 +9,7 @@
 # ---
 
 # %% [markdown]
-# # Guided CoT Eval & Frenet-Serret Curvature
+# # Brukino's AntiPaSTO Appetizer: Guided CoT Eval & Frenet-Serret Curvature
 #
 # Testing if $\kappa$ spikes late in the Chain of Thought when the model's criterion shifts.
 # *Note: Using `Qwen2.5-0.5B-Instruct` as `Qwen3.5-0.8B` is not publicly available on HuggingFace.*
