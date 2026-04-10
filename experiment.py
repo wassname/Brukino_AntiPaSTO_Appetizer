@@ -92,6 +92,8 @@ def compute_curvature(hidden_states):
     Computes Frenet-Serret extrinsic curvature (kappa).
     kappa(t) = ||gamma''(t)|| / ||gamma'(t)||^3
     '''
+
+    # TODO assert has grad
     
     # Cast to float32 to prevent float16 overflow when cubing
     gamma = hidden_states.to(torch.float32)
@@ -121,10 +123,6 @@ def guided_eval(model, tokenizer, prompt_text, n_think=32, device="cuda", s_spac
     prompt_ids = inputs["input_ids"]
     attention_mask = inputs["attention_mask"]
     
-    # think_prefix_ids = tokenizer.encode("Thinking Process:\\n", add_special_tokens=False, return_tensors="pt").to(device)
-    # prompt_ids = torch.cat([prompt_ids, think_prefix_ids], dim=1)
-    # attention_mask = torch.cat([attention_mask, torch.ones_like(think_prefix_ids)], dim=1)
-    
     with torch.no_grad():
         out = model.generate(
             prompt_ids, 
@@ -133,7 +131,8 @@ def guided_eval(model, tokenizer, prompt_text, n_think=32, device="cuda", s_spac
             do_sample=False, 
             pad_token_id=tokenizer.eos_token_id
         )
-    generated_ids = out[0, prompt_ids.shape[1]:]
+    start_idx = prompt_ids.shape[1]
+    generated_ids = out[0, start_idx:]
     
     suffix_ids = tokenizer.encode("\\nI should answer now.\\nMy choice: **", add_special_tokens=False, return_tensors="pt").to(device)
     full_ids = torch.cat([prompt_ids, generated_ids.unsqueeze(0), suffix_ids], dim=1)
@@ -143,6 +142,8 @@ def guided_eval(model, tokenizer, prompt_text, n_think=32, device="cuda", s_spac
         torch.ones_like(suffix_ids)
     ], dim=1)
     
+
+    # TODO kv cache
     with torch.no_grad():
         outputs = model(
             full_ids, 
@@ -168,10 +169,9 @@ def guided_eval(model, tokenizer, prompt_text, n_think=32, device="cuda", s_spac
 
     # Note the residual stream doesn't change much, but it's suppressed in the last few layers (see https://github.com/wassname/eliciting_suppressed_knowledge & https://arxiv.org/abs/2402.10588) so it's normal to choose the 80% or 60% layer for steering and analysis. We hope most of the thinking has been done, but it hasn't yet been suppressed in preperation for output.
     target_layer = int(0.8 * (len(outputs.hidden_states) - 1))
-    print(f"Extracting hidden states from layer {target_layer} for curvature analysis.")
+    print(f"Extracting hidden states from layer {target_layer}/{len(outputs.hidden_states) - 1} for curvature analysis. Shape of hidden states: {outputs.hidden_states[target_layer].shape}")
     
     middle_layer_hiddens = outputs.hidden_states[target_layer][0]
-    start_idx = prompt_ids.shape[1]
     cot_hiddens = middle_layer_hiddens[start_idx : start_idx + generated_ids.shape[0]]
     
     trajectory = project_to_s_space(cot_hiddens, s_space_U, s_space_S)
