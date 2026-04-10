@@ -31,7 +31,7 @@ import numpy as np
 from einops import rearrange, reduce, repeat
 
 # --- CONFIGURATION ---
-MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct" 
+MODEL_NAME = "Qwen/Qwen3.5-0.8B" 
 DATASET_NAME = "wassname/daily_dilemmas-self-honesty"
 DATASET_SPLIT = "honesty_eval"
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -126,7 +126,7 @@ def compute_curvature(hidden_states):
 
 
 # %%
-def guided_eval(model, tokenizer, prompt_text, n_think=32, device="cuda", s_space_U=None, s_space_S=None):
+def guided_eval(model, tokenizer, prompt_text, n_think=64, device="cuda", s_space_U=None, s_space_S=None):
     messages = [{"role": "system", "content": ""}, {"role": "user", "content": prompt_text}]
     
     inputs = tokenizer.apply_chat_template(
@@ -145,6 +145,7 @@ def guided_eval(model, tokenizer, prompt_text, n_think=32, device="cuda", s_spac
             prompt_ids, 
             attention_mask=attention_mask,
             max_new_tokens=n_think, 
+            min_new_tokens=n_think,
             do_sample=False, 
             pad_token_id=tokenizer.eos_token_id,
             use_cache=True, # TODO use cache in the model( call to save compute
@@ -197,10 +198,8 @@ def guided_eval(model, tokenizer, prompt_text, n_think=32, device="cuda", s_spac
     #   tuple: (inputs, token1, token2)
     #   of which each is tuple: layer, 
     #   containing [b t h]    
-
     hs = torch.concat([x[target_layer] for x in out.hidden_states], dim=1) # [batch_size, seq_len, hidden_dim]
     print(f"Extracting hidden states from layer {target_layer}/{n_layers} for curvature analysis")
-    # hs = rearrange(out.hidden_states[0][target_layer], 'b t h -> b t h')
 
     print(f"Shape of hidden states: {hs.shape} [b t h]")
     
