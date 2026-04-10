@@ -49,11 +49,10 @@ def get_s_space_svd(model):
     Returns: U, S, Vh
     """
     Ws = []
-    for layer in model.model.layers:
-        # In Qwen2, o_proj and down_proj weights are shape [hidden_size, in_features]
-        # We want a combined matrix of shape [hidden_size, sum(in_features)]
-        Ws.append(layer.self_attn.o_proj.weight.detach().cpu())
-        Ws.append(layer.mlp.down_proj.weight.detach().cpu())
+    mathes = ["o_proj", "down_proj"]
+    for name, module in model.named_modules():
+        if any(m in name for m in mathes):
+            Ws.append(module.weight.detach().cpu())
     W = torch.cat(Ws, dim=1).to(model.device)
     
     # SVD on the collective weight matrix
