@@ -92,8 +92,6 @@ def compute_curvature(hidden_states):
     Computes Frenet-Serret extrinsic curvature (kappa).
     kappa(t) = ||gamma''(t)|| / ||gamma'(t)||^3
     '''
-    if hidden_states.shape[0] < 3:
-        return torch.zeros(hidden_states.shape[0], device=hidden_states.device)
     
     # Cast to float32 to prevent float16 overflow when cubing
     gamma = hidden_states.to(torch.float32)
@@ -116,15 +114,16 @@ def guided_eval(model, tokenizer, prompt_text, n_think=32, device="cuda", s_spac
         messages, 
         add_generation_prompt=True, 
         return_tensors="pt", 
-        return_dict=True
+        return_dict=True,
+        enable_thinking=True 
     ).to(device)
     
     prompt_ids = inputs["input_ids"]
     attention_mask = inputs["attention_mask"]
     
-    think_prefix_ids = tokenizer.encode("Thinking Process:\\n", add_special_tokens=False, return_tensors="pt").to(device)
-    prompt_ids = torch.cat([prompt_ids, think_prefix_ids], dim=1)
-    attention_mask = torch.cat([attention_mask, torch.ones_like(think_prefix_ids)], dim=1)
+    # think_prefix_ids = tokenizer.encode("Thinking Process:\\n", add_special_tokens=False, return_tensors="pt").to(device)
+    # prompt_ids = torch.cat([prompt_ids, think_prefix_ids], dim=1)
+    # attention_mask = torch.cat([attention_mask, torch.ones_like(think_prefix_ids)], dim=1)
     
     with torch.no_grad():
         out = model.generate(
@@ -165,15 +164,17 @@ def guided_eval(model, tokenizer, prompt_text, n_think=32, device="cuda", s_spac
     if pmass < 0.9:
         top_tokens = tokenizer.decode(torch.topk(log_probs, k=5).indices.tolist())
         print(f"Warning: Low probability mass on Yes/No tokens: {pmass.item():.3f}. Top tokens were {top_tokens}")
+
+
+    # Note the residual stream doesn't change much, but it's suppressed in the last few layers (see https://github.com/wassname/eliciting_suppressed_knowledge & https://arxiv.org/abs/2402.10588) so it's normal to choose the 80% or 60% layer for steering and analysis. We hope most of the thinking has been done, but it hasn't yet been suppressed in preperation for output.
+    target_layer = int(0.8 * (len(outputs.hidden_states) - 1))
+    print(f"Extracting hidden states from layer {target_layer} for curvature analysis.")
     
-    final_layer_hiddens = outputs.hidden_states[-1][0]
+    middle_layer_hiddens = outputs.hidden_states[target_layer][0]
     start_idx = prompt_ids.shape[1]
-    cot_hiddens = final_layer_hiddens[start_idx : start_idx + generated_ids.shape[0]]
+    cot_hiddens = middle_layer_hiddens[start_idx : start_idx + generated_ids.shape[0]]
     
-    if s_space_U is not None and s_space_S is not None:
-        trajectory = project_to_s_space(cot_hiddens, s_space_U, s_space_S)
-    else:
-        trajectory = cot_hiddens
+    trajectory = project_to_s_space(cot_hiddens, s_space_U, s_space_S)
         
     return {
         "logratio": (p_yes - p_no).item(),

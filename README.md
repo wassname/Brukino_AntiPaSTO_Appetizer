@@ -63,3 +63,5 @@ The default script uses `Qwen/Qwen2.5-0.5B-Instruct` as it fits comfortably on s
 - [RepEng]() A nice hackable activation steering repo
 - [AntiPaSTO](https://arxiv.org/pdf/2601.07473) Introducing S space adapters with contrastive pairs
 - [S steering](https://github.com/wassname/ssteer-eval-aware/blob/main/report/report.md?plain=1) The light version of the above with no gradient or rotation of the U and V matrixes from the SVD decomposition of the hidden states
+- https://en.wikipedia.org/wiki/Frenet%E2%80%93Serret_formulas
+- https://huggingface.co/Qwen/Qwen3.5-0.8B/blob/main/config.json
