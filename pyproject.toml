@@ -1,0 +1,16 @@
+[project]
+name = "brukino-kappa-sspace-probe"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "accelerate>=1.13.0",
+    "datasets>=4.8.4",
+    "jupyter>=1.1.1",
+    "jupytext>=1.19.1",
+    "matplotlib>=3.10.8",
+    "scipy>=1.17.1",
+    "torch>=2.11.0",
+    "transformers>=5.5.0",
+]
