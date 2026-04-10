@@ -2,6 +2,11 @@
 
 Testing whether the Frenet-Serret extrinsic curvature ($\kappa$) of a model's hidden state trajectory can predict structural shifts in the model's persona or criterion (e.g., eval-awareness, preference changes) without needing behavioral labels.
 
+## Concepts & Motivation
+
+- **Guided Chain-of-Thought (CoT) with Logprobs:** Standard teacher-forced evaluation only measures the effect of an intervention on a single token, missing how the reasoning process itself changes. Full on-policy generation captures reasoning but is slow and hard to parse. The *Guided CoT* trick strikes a balance: we let the model generate a short reasoning trace (~32 tokens) greedily, then append a fixed suffix (e.g., `\nI should answer now.\nMy choice: **`) to force a decision. By running a single forward pass over this combined sequence, we extract both the hidden state trajectory of the reasoning *and* calibrated log-probabilities (`log P(Yes) - log P(No)`) at the final position. This provides a clean, bounded uncertainty estimate while capturing how personas or interventions alter the actual reasoning path.
+- **Daily Dilemmas (Self-Honesty Subset):** The dataset used here comes from `wassname/daily_dilemmas-self-honesty`, originally adapted from the Reddit *AmITheAsshole* subreddit. These are 1,360 unseen moral dilemmas where honesty explicitly conflicts with other values (like kindness or loyalty). Simple prompting (e.g., "You are honest") often struggles to steer models reliably in these complex, out-of-distribution format shifts. By testing opposite personas on these dilemmas, we create a challenging environment to observe if structural shifts in reasoning (captured by $\kappa$) correlate with actual preference flipping.
+
 ## Setup
 
 This project is managed by `uv`.
