@@ -18,6 +18,7 @@
 # 
 # - **Guided Chain-of-Thought (CoT) with Logprobs:** Standard teacher-forced evaluation misses how the reasoning process itself changes, while full on-policy generation is slow and hard to parse. The *Guided CoT* trick strikes a balance: we let the model generate a short reasoning trace (~32 tokens) greedily, then append a fixed suffix (e.g., `\nI should answer now.\nMy choice: **`) to force a decision. By running a single forward pass over this combined sequence, we extract both the hidden state trajectory of the reasoning *and* calibrated log-probabilities (`log P(Yes) - log P(No)`) at the final position.
 # - **Daily Dilemmas (Self-Honesty Subset):** Sourced from `wassname/daily_dilemmas-self-honesty` (adapted from the Reddit *AmITheAsshole* subreddit), these are moral dilemmas where honesty explicitly conflicts with other values. Simple prompting (e.g., "You are honest") often struggles here. By testing opposite personas on these dilemmas, we observe if structural shifts in reasoning (captured by $\kappa$) correlate with actual preference flipping.
+# - **Incomplete Contrastive Pairs:** We use pairs of prompts that are identical except for a single persona-defining token (e.g., "honest" vs. "dishonest") and stop right before the model's response. Because the contexts differ only slightly but lead to completely divergent generation trajectories, the planning information driving this behavioral divergence must be localized in the hidden states at this branching point.
 
 # %%
 import torch
